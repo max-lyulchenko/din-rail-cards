@@ -1,0 +1,31 @@
+{
+  "name": "din-rail-cards",
+  "version": "0.1.0",
+  "description": "DIN rail breaker and distribution board cards for Home Assistant",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "watch": "node scripts/build.mjs --watch",
+    "test-kit": "node scripts/build.mjs && node scripts/test-kit.cjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "format": "prettier --write .",
+    "lint": "prettier --check . && tsc --noEmit"
+  },
+  "dependencies": {
+    "@mdi/js": "7.4.47",
+    "home-assistant-js-websocket": "9.9.0",
+    "lit": "3.3.3",
+    "memoize-one": "6.0.0",
+    "superstruct": "2.0.2"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "jszip": "3.10.2",
+    "prettier": "3.10.1",
+    "typescript": "6.0.3",
+    "vitest": "5.1.1"
+  }
+}
