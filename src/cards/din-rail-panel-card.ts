@@ -1321,7 +1321,8 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
     }
     .slot {
       position: relative;
-      width: calc(32 * var(--u));
+      /* As wide as a two-digit rating (16A) */
+      width: calc(33.3 * var(--u));
       height: calc(40 * var(--u));
       border-radius: calc(3 * var(--u));
       background: #262626;
