@@ -84,13 +84,21 @@ const TOTALS = [
 
 const STUB_MODULES = 4;
 
+// Width of a total display in digit heights (W has room for kW), and of the
+// gap between two, to shrink the displays so they fit one row
+const TOTAL_WIDTHS = { W: 6.2, A: 4.4, V: 4.4 } as const;
+const TOTAL_GAP = 8 / 22;
+
 // The zoom shown beside a module under the mouse, like a spyglass: its scale
 // and its gap to the module and the edges of the window, in pixels
 const ZOOM_SCALE = 2.5;
 const ZOOM_GAP = 12;
 
 interface Zoom {
-  module: DinRailPanelModuleConfig;
+  /** A module, or the totals with the digit height of their copy */
+  module?: DinRailPanelModuleConfig;
+  totals?: boolean;
+  digitHeight?: number;
   left: number;
   top: number;
   width: number;
@@ -366,9 +374,65 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
           width: `${zoom.width}px`,
         })}
       >
-        ${this._renderModule(zoom.module, readings, true)}
+        ${zoom.module ? this._renderModule(zoom.module, readings, true) : nothing}
+        ${zoom.totals ? this._renderTotalsZoom(zoom.digitHeight!) : nothing}
       </div>
     `;
+  }
+
+  private _renderTotalsZoom(digitHeight: number) {
+    return html`
+      <div
+        class="totals zoomed"
+        style=${styleMap({ "--digit-height": `${digitHeight}px` })}
+      >
+        <div class="lcds">${this._renderTotalLcds(true)}</div>
+      </div>
+    `;
+  }
+
+  // A larger copy of all the totals over any of them, below them (over the
+  // modules) or else above, so it does not cover what the mouse points at
+  private _zoomTotals(ev: PointerEvent) {
+    if (
+      ev.pointerType !== "mouse" ||
+      this._config!.zoom_on_hover === false ||
+      this._zoom?.totals
+    ) {
+      return;
+    }
+    const row = (ev.currentTarget as HTMLElement).closest(".lcds")!;
+    const bezels = [...row.querySelectorAll(".lcd-bezel")].map((bezel) =>
+      bezel.getBoundingClientRect()
+    );
+    const rect = {
+      left: Math.min(...bezels.map((r) => r.left)),
+      right: Math.max(...bezels.map((r) => r.right)),
+      top: Math.min(...bezels.map((r) => r.top)),
+      bottom: Math.max(...bezels.map((r) => r.bottom)),
+    };
+    const width = (rect.right - rect.left) * ZOOM_SCALE;
+    const height = (rect.bottom - rect.top) * ZOOM_SCALE;
+    const digits = row.querySelector(".lcd-digits")!.getBoundingClientRect();
+    const below = rect.bottom + ZOOM_GAP;
+    const top =
+      below + height <= window.innerHeight - ZOOM_GAP
+        ? below
+        : Math.max(ZOOM_GAP, rect.top - ZOOM_GAP - height);
+    const left = Math.max(
+      ZOOM_GAP,
+      Math.min(
+        (rect.left + rect.right - width) / 2,
+        window.innerWidth - width - ZOOM_GAP
+      )
+    );
+    this._zoom = {
+      totals: true,
+      digitHeight: digits.height * ZOOM_SCALE,
+      left,
+      top,
+      width,
+    };
   }
 
   // Beside the module, so it does not cover what the mouse points at, and
@@ -391,8 +455,12 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
     if (this._zoom?.module === module) {
       return;
     }
-    const rect = cell.getBoundingClientRect();
-    const board = cell.closest(".enclosure")!.getBoundingClientRect();
+    this._zoom = { module, ...this._zoomPlace(cell) };
+  }
+
+  private _zoomPlace(element: HTMLElement) {
+    const rect = element.getBoundingClientRect();
+    const board = element.closest(".enclosure")!.getBoundingClientRect();
     const width = rect.width * ZOOM_SCALE;
     const height = rect.height * ZOOM_SCALE;
     const position = (rect.left + rect.width / 2 - board.left) / board.width;
@@ -410,7 +478,7 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
         window.innerHeight - height - ZOOM_GAP
       )
     );
-    this._zoom = { module, left, top, width };
+    return { left, top, width };
   }
 
   private _zoomOut() {
@@ -481,32 +549,50 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
     const totals = TOTALS.filter(
       ({ show }) => this._config![show] !== false
     ).map((total) => ({ total, shown: this._total(total) }));
-    if (totals.every(({ shown }) => !shown)) {
+    const shownUnits = totals
+      .filter(({ shown }) => shown)
+      .map(({ total }) => total.unit);
+    if (!shownUnits.length) {
       return nothing;
     }
+    const rowWidth =
+      shownUnits.reduce((sum, unit) => sum + TOTAL_WIDTHS[unit], 0) +
+      (shownUnits.length - 1) * TOTAL_GAP;
     return html`
-      <div class="totals">
+      <div
+        class="totals"
+        style=${styleMap({ "--row-width": rowWidth.toFixed(3) })}
+      >
         <span class="totals-title">
           ${localizer(this.hass!)(
             "ui.panel.lovelace.cards.din-rail-panel.totals"
           )}
         </span>
-        <div class="lcds">
-          ${totals.map(({ total, shown }) =>
-            shown
-              ? this._renderTotal(total, shown.value, shown.entityId)
-              : nothing
-          )}
+        <div class="lcds" @pointerleave=${this._zoomOut}>
+          ${this._renderTotalLcds(false)}
         </div>
       </div>
     `;
   }
 
+  private _renderTotalLcds(zoomed: boolean) {
+    return TOTALS.filter(({ show }) => this._config![show] !== false).map(
+      (total) => {
+        const shown = this._total(total);
+        return shown
+          ? this._renderTotal(total, shown.value, shown.entityId, zoomed)
+          : nothing;
+      }
+    );
+  }
+
   private _renderTotal(
     total: (typeof TOTALS)[number],
     value: number,
-    entityId?: string
+    entityId?: string,
+    zoomed = false
   ) {
+    const zoomIn = zoomed ? undefined : this._zoomTotals;
     const { digits, unit } = formatTotalValue(
       value,
       total.unit,
@@ -552,6 +638,7 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
           <button
             class="lcd-bezel"
             data-entity-id=${entityId}
+            @pointerenter=${zoomIn}
             @click=${this._showMoreInfo}
             aria-label=${ariaLabel}
             title=${ariaLabel}
@@ -562,6 +649,7 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
       : html`
           <div
             class="lcd-bezel"
+            @pointerenter=${zoomIn}
             role="img"
             aria-label=${ariaLabel}
             title=${ariaLabel}
@@ -940,6 +1028,19 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
       color: inherit;
       animation: zoom-in 120ms ease-out;
     }
+    .totals.zoomed {
+      container-type: normal;
+      margin: 0;
+      padding: 0;
+      border: none;
+      box-shadow: none;
+    }
+    .totals.zoomed .lcds {
+      flex-wrap: nowrap;
+    }
+    .totals.zoomed .lcd-bezel {
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    }
     .zoom .module {
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
     }
@@ -997,8 +1098,11 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
     }
     /* The meter of the whole box: a section engraved in the enclosure,
        its title cut into the border, with 3 displays and no labels */
+    /* The displays shrink to fit one row, down to 12px digits, below which
+       they wrap. cqi is the width of the totals, their container. */
     .totals {
-      --digit-height: 22px;
+      --digit-height: max(12px, min(22px, 100cqi / var(--row-width)));
+      container-type: inline-size;
       position: relative;
       box-sizing: border-box;
       margin-top: 6px;
@@ -1031,16 +1135,17 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
       flex-direction: row;
       flex-wrap: wrap;
       justify-content: center;
-      gap: var(--ha-space-2);
+      gap: calc(var(--digit-height) * 8 / 22);
     }
     .totals .lcd-bezel {
-      padding: 3px;
-      border-radius: 5px;
+      padding: calc(var(--digit-height) * 3 / 22);
+      border-radius: calc(var(--digit-height) * 5 / 22);
     }
     .totals .lcd {
-      gap: 5px;
-      padding: 5px 7px;
-      border-radius: 3px;
+      gap: calc(var(--digit-height) * 5 / 22);
+      padding: calc(var(--digit-height) * 5 / 22)
+        calc(var(--digit-height) * 7 / 22);
+      border-radius: calc(var(--digit-height) * 3 / 22);
     }
     /* A digit is 27 of 36 units wide, plus 2 units of margin */
     .totals .lcd-digits {
