@@ -56,6 +56,7 @@ const TOTALS = [
   {
     key: "power_entity",
     override: "total_power_entity",
+    show: "show_total_power",
     unit: "W",
     average: false,
     label: "total_power",
@@ -64,6 +65,7 @@ const TOTALS = [
   {
     key: "current_entity",
     override: "total_current_entity",
+    show: "show_total_current",
     unit: "A",
     average: false,
     label: "total_current",
@@ -72,6 +74,7 @@ const TOTALS = [
   {
     key: "voltage_entity",
     override: "total_voltage_entity",
+    show: "show_total_voltage",
     unit: "V",
     average: true,
     label: "average_voltage",
@@ -386,11 +389,9 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
   }
 
   private _renderTotals() {
-    // A reading turned off for the board is not totaled either, unless
-    // show_all_totals keeps all three totals
-    const shown = shownReadings(this._config!).map(({ key }) => key);
+    // Each total has its own switch, whatever the modules show
     const totals = TOTALS.filter(
-      ({ key }) => this._config!.show_all_totals || shown.includes(key)
+      ({ show }) => this._config![show] !== false
     ).map((total) => ({ total, shown: this._total(total) }));
     if (totals.every(({ shown }) => !shown)) {
       return nothing;

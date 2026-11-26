@@ -53,10 +53,10 @@ title: Distribution board # engraved in the cover
 title_color: red # optional: a theme color (red, primary) or a CSS color (#c62828)
 columns: 12 # modules per rail, 1-12
 switch_style: din # the same for all modules
-show_voltage: false # hide a reading on all modules and the totals (show_power, show_current too)
+show_voltage: false # hide a reading on all modules (show_power, show_current too); the totals have their own switches
 precision: 0 # 0-2 decimals of the modules and the totals (W, A)
 show_totals: true # W (4 digits, kW above 9999 W), A (3 digits), V (3 digits); a sensor shared by modules counts once
-show_all_totals: true # show W, A and V totals even when show_* hides them on the modules
+show_total_voltage: true # each total on its own: show_total_power, show_total_current, show_total_voltage
 # Optional: show these sensors (a main meter, say) instead of the totals of the modules
 total_power_entity: sensor.main_power
 total_current_entity: sensor.main_current
