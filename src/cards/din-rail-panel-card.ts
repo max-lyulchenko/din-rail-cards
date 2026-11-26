@@ -95,8 +95,10 @@ const ZOOM_SCALE = 2.5;
 const ZOOM_GAP = 12;
 
 interface Zoom {
-  /** A module, or the totals with the digit height of their copy */
+  /** A module (only its name over its switch), or the totals with the digit
+   * height of their copy */
   module?: DinRailPanelModuleConfig;
+  name?: { text: string; fontSize: number };
   totals?: boolean;
   digitHeight?: number;
   left: number;
@@ -374,7 +376,18 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
           width: `${zoom.width}px`,
         })}
       >
-        ${zoom.module ? this._renderModule(zoom.module, readings, true) : nothing}
+        ${
+          zoom.name
+            ? html`<div
+                class="zoom-name"
+                style=${styleMap({ "font-size": `${zoom.name.fontSize}px` })}
+              >
+                ${zoom.name.text}
+              </div>`
+            : zoom.module
+              ? this._renderModule(zoom.module, readings, true)
+              : nothing
+        }
         ${zoom.totals ? this._renderTotalsZoom(zoom.digitHeight!) : nothing}
       </div>
     `;
@@ -444,26 +457,62 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
       return;
     }
     const cell = ev.currentTarget as HTMLElement;
-    // Only over the name and the displays, not over the switch
-    const upper = cell.querySelector(".lcds") ?? cell.querySelector(".label");
-    if (!upper || ev.clientY > upper.getBoundingClientRect().bottom) {
-      if (this._zoom) {
-        this._zoomOut();
-      }
+    // The whole module over its name and displays, only its name over its
+    // switch
+    const label = cell.querySelector<HTMLElement>(".label")!;
+    const upper = cell.querySelector(".lcds") ?? label;
+    const overSwitch = ev.clientY > upper.getBoundingClientRect().bottom;
+    if (this._zoom?.module === module && !!this._zoom.name === overSwitch) {
       return;
     }
-    if (this._zoom?.module === module) {
+    if (!overSwitch) {
+      const rect = cell.getBoundingClientRect();
+      this._zoom = {
+        module,
+        ...this._zoomPlace(
+          cell,
+          rect.width * ZOOM_SCALE,
+          rect.height * ZOOM_SCALE
+        ),
+      };
       return;
     }
-    this._zoom = { module, ...this._zoomPlace(cell) };
+    const text = label.textContent?.trim();
+    if (!text) {
+      this._zoomOut();
+      return;
+    }
+    // The size of the name at 2.5 times its font, with the padding and the
+    // border of the tag
+    const fontSize = parseFloat(getComputedStyle(label).fontSize) * ZOOM_SCALE;
+    const range = document.createRange();
+    range.selectNodeContents(label);
+    const width = Math.min(
+      Math.ceil(range.getBoundingClientRect().width * ZOOM_SCALE) +
+        fontSize +
+        4,
+      window.innerWidth - 2 * ZOOM_GAP
+    );
+    const height = fontSize * 1.6;
+    const breaker = cell.querySelector(".breaker") ?? cell;
+    this._zoom = {
+      module,
+      name: { text, fontSize },
+      ...this._zoomPlace(cell, width, height, breaker.getBoundingClientRect()),
+    };
   }
 
-  private _zoomPlace(element: HTMLElement) {
+  // Beside `element`, centered on `middle` (the element by default)
+  private _zoomPlace(
+    element: HTMLElement,
+    width: number,
+    height: number,
+    middle?: DOMRect
+  ) {
     const rect = element.getBoundingClientRect();
     const board = element.closest(".enclosure")!.getBoundingClientRect();
-    const width = rect.width * ZOOM_SCALE;
-    const height = rect.height * ZOOM_SCALE;
     const position = (rect.left + rect.width / 2 - board.left) / board.width;
+    const center = middle ?? rect;
     const leftSide = rect.left - ZOOM_GAP - width;
     const rightSide = rect.right + ZOOM_GAP;
     const fitsLeft = leftSide >= ZOOM_GAP;
@@ -474,7 +523,7 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
     const top = Math.max(
       ZOOM_GAP,
       Math.min(
-        rect.top + (rect.height - height) / 2,
+        center.top + (center.height - height) / 2,
         window.innerHeight - height - ZOOM_GAP
       )
     );
@@ -1042,6 +1091,20 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
     }
     .zoom .module {
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    }
+    .zoom-name {
+      box-sizing: border-box;
+      padding: 0 0.5em;
+      line-height: 1.6;
+      border-radius: 0.3em;
+      border: 1px solid var(--divider-color);
+      background: var(--ha-color-fill-neutral-quiet-resting, #e8e8e8);
+      font-weight: var(--ha-font-weight-medium);
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
     }
     @keyframes zoom-in {
