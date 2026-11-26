@@ -9,6 +9,16 @@ Two Lovelace cards that show switches as DIN rail equipment:
 
 Both cards have a visual editor.
 
+## Project agenda
+
+I needed a distribution board panel like the one I tried to write myself
+three years ago, but I had no time. So Claude developed this panel 100%,
+with me as the mentor.
+
+It fulfills my use case 100%. If you need something more, I'm not promising
+to add it, but I'll try: ideas from others are always welcome. And you can
+do the same as I did.
+
 ## Installation
 
 ### HACS
