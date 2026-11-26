@@ -472,7 +472,9 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
         ...this._zoomPlace(
           cell,
           rect.width * ZOOM_SCALE,
-          rect.height * ZOOM_SCALE
+          rect.height * ZOOM_SCALE,
+          undefined,
+          2 * ZOOM_GAP
         ),
       };
       return;
@@ -495,26 +497,32 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
     );
     const height = fontSize * 1.6;
     const breaker = cell.querySelector(".breaker") ?? cell;
-    this._zoom = {
-      module,
-      name: { text, fontSize },
-      ...this._zoomPlace(cell, width, height, breaker.getBoundingClientRect()),
-    };
+    const place = this._zoomPlace(
+      cell,
+      width,
+      height,
+      breaker.getBoundingClientRect()
+    );
+    // 20% of its width further left
+    place.left = Math.max(ZOOM_GAP, place.left - width * 0.2);
+    this._zoom = { module, name: { text, fontSize }, ...place };
   }
 
-  // Beside `element`, centered on `middle` (the element by default)
+  // Beside `element`, `gap` away from it, centered on `middle` (the element
+  // by default)
   private _zoomPlace(
     element: HTMLElement,
     width: number,
     height: number,
-    middle?: DOMRect
+    middle?: DOMRect,
+    gap = ZOOM_GAP
   ) {
     const rect = element.getBoundingClientRect();
     const board = element.closest(".enclosure")!.getBoundingClientRect();
     const position = (rect.left + rect.width / 2 - board.left) / board.width;
     const center = middle ?? rect;
-    const leftSide = rect.left - ZOOM_GAP - width;
-    const rightSide = rect.right + ZOOM_GAP;
+    const leftSide = rect.left - gap - width;
+    const rightSide = rect.right + gap;
     const fitsLeft = leftSide >= ZOOM_GAP;
     const fitsRight = rightSide + width <= window.innerWidth - ZOOM_GAP;
     const onLeft =
