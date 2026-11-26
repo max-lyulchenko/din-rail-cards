@@ -542,7 +542,6 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
               : html`
                   <div class="breaker">
                     ${ratingLabel}
-                    <span class="mark">I</span>
                     <button
                       class="slot"
                       role="switch"
@@ -553,9 +552,10 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
                       .disabled=${unavailable}
                       @click=${this._toggle}
                     >
-                      <span class="lever"></span>
+                      <span class="slot-label on-label">ON</span>
+                      <span class="slot-label off-label">OFF</span>
+                      <span class="lever">${isOn ? "ON" : "OFF"}</span>
                     </button>
-                    <span class="mark">O</span>
                   </div>
                   <span class="flag"></span>
                 `
@@ -666,8 +666,7 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
    * 2 x 2 + gap 4 + rating 9 + 18 + 9 + gap 1 + switch + padding 6.
    * The rating has a font of 18 units, with half its font size above and
    * below it. The button switch is a circle as wide as the rating ("10A"),
-   * 32 units; the DIN switch is 40 units high: mark 6 + gap 1 + slot 26
-   * + gap 1 + mark 6.
+   * 32 units; the DIN switch is a slot as wide, 40 units high.
    * Display width: digits 42 + gap 2 + unit 11 + padding 4 + bezel 4 = 63
    * units, all the width inside the module.
    */
@@ -999,33 +998,57 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
       --button-width: var(--button-height);
       --button-icon-size: var(--button-height);
     }
-    .mark {
-      font-size: calc(6 * var(--u));
-      font-weight: var(--ha-font-weight-bold);
-      color: var(--secondary-text-color);
-      line-height: calc(6 * var(--u));
-    }
     .slot {
       position: relative;
-      width: calc(14 * var(--u));
-      height: calc(26 * var(--u));
-      border-radius: calc(2 * var(--u));
-      background: var(--primary-text-color);
-      opacity: 0.85;
+      width: calc(32 * var(--u));
+      height: calc(40 * var(--u));
+      border-radius: calc(3 * var(--u));
+      background: #262626;
     }
     .lever {
       position: absolute;
-      left: calc(1.5 * var(--u));
-      right: calc(1.5 * var(--u));
-      height: calc(12 * var(--u));
-      top: calc(100% - 13.5 * var(--u));
-      border-radius: calc(1.5 * var(--u));
-      background: var(--card-background-color, #fff);
+      left: calc(3 * var(--u));
+      right: calc(3 * var(--u));
+      height: calc(18 * var(--u));
+      top: calc(100% - 21 * var(--u));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: calc(2 * var(--u));
+      background: var(--red-color, #f44336);
+      color: #fff;
+      font-size: calc(10 * var(--u));
+      font-weight: var(--ha-font-weight-bold, 700);
+      letter-spacing: 0.04em;
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
       transition: top 150ms ease-in-out;
     }
     .module.on .lever {
-      top: calc(1.5 * var(--u));
+      background: var(--green-color, #4caf50);
+      top: calc(3 * var(--u));
+    }
+    /* The states printed in the slot; the lever hides the one it is at,
+       so the slot shows the other */
+    .slot-label {
+      position: absolute;
+      left: 0;
+      right: 0;
+      /* The black left by the lever: 40 - 3 - 18 units */
+      height: calc(19 * var(--u));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: calc(10 * var(--u));
+      font-weight: 400;
+      letter-spacing: 0.08em;
+    }
+    .on-label {
+      top: 0;
+      color: color-mix(in srgb, var(--green-color, #4caf50) 75%, #fff);
+    }
+    .off-label {
+      bottom: 0;
+      color: color-mix(in srgb, var(--red-color, #f44336) 75%, #fff);
     }
     .flag {
       position: absolute;
