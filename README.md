@@ -104,6 +104,24 @@ npm run format      # format the code
 To try a change, copy `dist/din-rail-cards.js` to
 `<config>/www/community/din-rail-cards/` and raise `?v=` in the resource URL.
 
+### In the demo of the Home Assistant frontend
+
+The demo of a [Home Assistant frontend](https://github.com/home-assistant/frontend)
+checkout can load the cards from this project, with simulated breakers and a
+distribution board. Its development build needs this resource, which a fork
+of the frontend adds in `demo/src/stubs/lovelace.ts`:
+
+```ts
+{ id: "din-rail-cards", type: "module", url: "http://localhost:5050/din-rail-cards.js" }
+```
+
+1. Here: `npm run dev` builds the cards on every change and serves them at
+   `http://localhost:5050/din-rail-cards.js`.
+2. In the frontend: start the demo (`gulp develop-demo`) and open
+   `http://localhost:8090`. The console shows `DIN-RAIL-CARDS 0.1.0-dev`
+   when the cards are loaded.
+3. After a change, reload the demo page.
+
 | Path                       | What it is                                        |
 | -------------------------- | ------------------------------------------------- |
 | `src/index.ts`             | Entry point: registers the cards                  |

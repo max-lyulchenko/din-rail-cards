@@ -8,6 +8,7 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "watch": "node scripts/build.mjs --watch",
+    "dev": "node scripts/build.mjs --serve",
     "test-kit": "node scripts/build.mjs && node scripts/test-kit.cjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
