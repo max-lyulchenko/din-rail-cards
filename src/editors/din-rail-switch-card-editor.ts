@@ -71,6 +71,20 @@ export const voltageLimitsSchema = {
   ],
 } as const satisfies HaFormSchema;
 
+/** Which readings to show (all by default), shared with the panel editor. */
+export const showReadingsSchema = [
+  { name: "show_power", selector: { boolean: {} } },
+  { name: "show_current", selector: { boolean: {} } },
+  { name: "show_voltage", selector: { boolean: {} } },
+] as const satisfies HaFormSchema[];
+
+/** The editor shows each reading as on until it is turned off. */
+export const SHOW_READINGS_DEFAULTS = {
+  show_power: true,
+  show_current: true,
+  show_voltage: true,
+};
+
 /**
  * The entities of each device, to offer only the entities of the device of a
  * breaker
@@ -144,6 +158,9 @@ const cardConfigStruct = assign(
     current_entity: optional(string()),
     voltage_entity: optional(string()),
     lcd_displays: optional(boolean()),
+    show_power: optional(boolean()),
+    show_current: optional(boolean()),
+    show_voltage: optional(boolean()),
     switch_style: optional(switchStyleStruct),
     precision: optional(number()),
     rating_entity: optional(string()),
@@ -204,6 +221,7 @@ export class DinRailSwitchCardEditor
         },
         { name: "max_current", selector: maxCurrentSelector },
         { name: "lcd_displays", selector: { boolean: {} } },
+        ...showReadingsSchema,
         { name: "precision", selector: precisionSelector },
         voltageLimitsSchema,
         { name: "theme", selector: { theme: {} } },
@@ -216,6 +234,7 @@ export class DinRailSwitchCardEditor
     }
     const data = {
       switch_style: "din",
+      ...SHOW_READINGS_DEFAULTS,
       ...VOLTAGE_LIMIT_DEFAULTS,
       ...this._config,
     };
@@ -253,6 +272,9 @@ export class DinRailSwitchCardEditor
       case "current_entity":
       case "voltage_entity":
       case "lcd_displays":
+      case "show_power":
+      case "show_current":
+      case "show_voltage":
       case "switch_style":
       case "precision":
       case "device":

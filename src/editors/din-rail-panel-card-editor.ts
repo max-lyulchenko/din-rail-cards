@@ -38,7 +38,9 @@ import {
   switchStyleStruct,
   maxCurrentSelector,
   ratingEntitySelector,
+  SHOW_READINGS_DEFAULTS,
   VOLTAGE_LIMIT_DEFAULTS,
+  showReadingsSchema,
   voltageLimitsSchema,
 } from "./din-rail-switch-card-editor";
 
@@ -63,6 +65,9 @@ const cardConfigStruct = assign(
     precision: optional(number()),
     voltage_low: optional(number()),
     voltage_high: optional(number()),
+    show_power: optional(boolean()),
+    show_current: optional(boolean()),
+    show_voltage: optional(boolean()),
     show_totals: optional(boolean()),
     total_power_entity: optional(string()),
     total_current_entity: optional(string()),
@@ -159,6 +164,7 @@ export class DinRailPanelCardEditor
         },
         { name: "switch_style", selector: switchStyleSelector(localize) },
         { name: "precision", selector: precisionSelector },
+        ...showReadingsSchema,
         { name: "show_totals", selector: { boolean: {} } },
         { name: "total_power_entity", selector: sensorSelector("power") },
         { name: "total_current_entity", selector: sensorSelector("current") },
@@ -176,6 +182,7 @@ export class DinRailPanelCardEditor
       columns: DIN_RAIL_PANEL_MAX_COLUMNS,
       switch_style: "din",
       show_totals: true,
+      ...SHOW_READINGS_DEFAULTS,
       ...VOLTAGE_LIMIT_DEFAULTS,
       ...this._config,
     };
@@ -390,6 +397,9 @@ export class DinRailPanelCardEditor
   ) => {
     switch (schema.name) {
       case "switch_style":
+      case "show_power":
+      case "show_current":
+      case "show_voltage":
       case "precision":
       case "voltage_low":
       case "voltage_high":

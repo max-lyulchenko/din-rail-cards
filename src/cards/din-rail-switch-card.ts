@@ -39,10 +39,30 @@ import type { DinRailSwitchCardConfig, DinRailSwitchStyle } from "./types";
 export const DIN_RAIL_SWITCH_DOMAINS = ["switch", "input_boolean", "light"];
 
 export const READINGS = [
-  { key: "power_entity", deviceClass: "power", label: "power" },
-  { key: "current_entity", deviceClass: "current", label: "current" },
-  { key: "voltage_entity", deviceClass: "voltage", label: "voltage" },
+  {
+    key: "power_entity",
+    show: "show_power",
+    deviceClass: "power",
+    label: "power",
+  },
+  {
+    key: "current_entity",
+    show: "show_current",
+    deviceClass: "current",
+    label: "current",
+  },
+  {
+    key: "voltage_entity",
+    show: "show_voltage",
+    deviceClass: "voltage",
+    label: "voltage",
+  },
 ] as const;
+
+/** The readings a card shows: all but those its config turns off. */
+export const shownReadings = (
+  config: Partial<Record<(typeof READINGS)[number]["show"], boolean>>
+) => READINGS.filter(({ show }) => config[show] !== false);
 
 export const LCD_DIGITS = 4;
 
@@ -372,7 +392,9 @@ export class DinRailSwitchCard extends LitElement implements LovelaceCard {
           this._config.lcd_displays
             ? html`
                 <div class="lcds ${this._voltageLevel() ?? ""}">
-                  ${READINGS.map(({ key, label }) => this._renderLcd(key, label))}
+                  ${shownReadings(this._config).map(({ key, label }) =>
+                    this._renderLcd(key, label)
+                  )}
                 </div>
                 <div class="switch-row">${module}</div>
               `
@@ -380,7 +402,7 @@ export class DinRailSwitchCard extends LitElement implements LovelaceCard {
                 <div class="content">
                   ${module}
                   <div class="readings">
-                    ${READINGS.map(({ key, label }) =>
+                    ${shownReadings(this._config).map(({ key, label }) =>
                       this._renderReading(key, label)
                     )}
                   </div>

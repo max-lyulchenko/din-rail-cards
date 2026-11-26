@@ -5,7 +5,8 @@ import { customElement, property } from "lit/decorators.js";
 /**
  * The horizontal push button of a smart DIN rail breaker, shaped like a pill.
  * Its stand-by symbol lights green when the switch is on and red when it is
- * off. Set `--button-height` and `--button-width` to size it.
+ * off. Set `--button-height` and `--button-width` to size it (equal for a
+ * round button), and `--button-icon-size` for the symbol.
  */
 @customElement("din-rail-button")
 export class DinRailButton extends LitElement {
@@ -72,7 +73,10 @@ export class DinRailButton extends LitElement {
       outline-offset: 2px;
     }
     ha-svg-icon {
-      --mdc-icon-size: calc(var(--button-height) * 0.7);
+      --mdc-icon-size: var(
+        --button-icon-size,
+        calc(var(--button-height) * 0.7)
+      );
       filter: drop-shadow(
         0 0 calc(var(--button-height) * 0.12) var(--led-color)
       );

@@ -42,6 +42,7 @@ import {
   formatRating,
   lcdBacklight,
   readRating,
+  shownReadings,
 } from "./din-rail-switch-card";
 import type { ReadingKey } from "./din-rail-switch-card";
 import type { DinRailPanelCardConfig, DinRailPanelModuleConfig } from "./types";
@@ -227,8 +228,12 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
 
   // Show a display row only when a module of the panel uses it, so every
   // module of the panel lines up
-  private _shownReadings = memoizeOne((modules: DinRailPanelModuleConfig[]) =>
-    READINGS.filter(({ key }) => modules.some((module) => module[key]))
+  // The readings turned on for the board that some module has a sensor for
+  private _shownReadings = memoizeOne(
+    (config: DinRailPanelCardConfig, modules: DinRailPanelModuleConfig[]) =>
+      shownReadings(config).filter(({ key }) =>
+        modules.some((module) => module[key])
+      )
   );
 
   protected shouldUpdate(changedProps: PropertyValues): boolean {
@@ -281,7 +286,7 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
     }
     const columns = this._columns;
     const rails = this._rails(this._config.modules, columns);
-    const readings = this._shownReadings(this._config.modules);
+    const readings = this._shownReadings(this._config, this._config.modules);
 
     return html`
       <ha-card>
@@ -378,10 +383,11 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
   }
 
   private _renderTotals() {
-    const totals = TOTALS.map((total) => ({
-      total,
-      shown: this._total(total),
-    }));
+    // A reading turned off for the board is not totaled either
+    const shown = shownReadings(this._config!).map(({ key }) => key);
+    const totals = TOTALS.filter(({ key }) => shown.includes(key)).map(
+      (total) => ({ total, shown: this._total(total) })
+    );
     if (totals.every(({ shown }) => !shown)) {
       return nothing;
     }
@@ -652,18 +658,18 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
   }
 
   /*
-   * Every module is drawn on a grid of 92 units wide, the unit (--u) being a
-   * 92nd of the module width, so a module scales with the card. Modules stop
-   * growing at 84px wide.
+   * Every module is drawn on a grid of 69 units wide, the unit (--u) being a
+   * 69th of the module width, so a module scales with the card. Modules stop
+   * growing at 63px wide.
    *
-   * Module height: padding 4 + label 14 + gap 4 + displays 3 x 26.25 + gaps
+   * Module height: padding 4 + label 14 + gap 4 + displays 3 x 24 + gaps
    * 2 x 2 + gap 4 + rating 9 + 18 + 9 + gap 1 + switch + padding 6.
    * The rating has a font of 18 units, with half its font size above and
-   * below it. The button switch
-   * is 20 units high, the DIN switch twice that: mark 6 + gap 1 + slot 26
-   * + gap 1 + mark 6 = 40 units.
-   * Display width: digits 49.7 + gap 3 + unit 19 + padding 6 + bezel 4 = 81.7
-   * of the 84 units inside the module.
+   * below it. The button switch is a circle as wide as the rating ("10A"),
+   * 32 units; the DIN switch is 40 units high: mark 6 + gap 1 + slot 26
+   * + gap 1 + mark 6.
+   * Display width: digits 42 + gap 2 + unit 11 + padding 4 + bezel 4 = 63
+   * units, all the width inside the module.
    */
   static styles = css`
     ha-card {
@@ -691,7 +697,7 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
     /* The distribution board: a plastic cover held by a Pozidriv screw in each
        corner */
     .enclosure {
-      --module-max-width: 84px;
+      --module-max-width: 63px;
       --rail-padding: 10px;
       --module-gap: 2px;
       --box-padding: 28px;
@@ -819,7 +825,7 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
 
     /* A module, drawn like a single pole DIN rail switch */
     .module {
-      --u: calc(100cqi / 92);
+      --u: calc(100cqi / 69);
       --module-color: var(--ha-color-fill-neutral-quiet-resting, #e8e8e8);
       --active-color: var(--state-active-color);
       position: relative;
@@ -957,13 +963,17 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
       white-space: nowrap;
     }
 
-    /* The displays of a module: digits of 16.25 units, 26.25 units high */
+    /* The displays of a module: digits of 42 by 13.75 units, 24 units high */
     .module .lcd {
-      padding: calc(3 * var(--u));
+      gap: calc(2 * var(--u));
+      padding: calc(3 * var(--u)) calc(2 * var(--u));
     }
     .module .lcd-digits {
-      height: calc(16.25 * var(--u));
-      width: calc(16.25 * var(--u) * 110 / 36);
+      height: calc(42 * var(--u) * 36 / 110);
+      width: calc(42 * var(--u));
+    }
+    .module .lcd-unit {
+      width: calc(11 * var(--u));
     }
 
     .breaker {
@@ -983,8 +993,11 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
       color: var(--secondary-text-color);
     }
     din-rail-button {
-      --button-height: calc(20 * var(--u));
-      --button-width: calc(64 * var(--u));
+      /* Round; the stand-by symbol is 3/4 of its 24px icon box, so a box
+         as wide as the button makes the symbol 75% of it */
+      --button-height: calc(32 * var(--u));
+      --button-width: var(--button-height);
+      --button-icon-size: var(--button-height);
     }
     .mark {
       font-size: calc(6 * var(--u));

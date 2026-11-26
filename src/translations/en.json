@@ -44,6 +44,9 @@
               "current_entity": "Current sensor (A)",
               "voltage_entity": "Voltage sensor (V)",
               "lcd_displays": "Retro LCD displays",
+              "show_power": "Show the power (W)",
+              "show_current": "Show the current (A)",
+              "show_voltage": "Show the voltage (V)",
               "switch_style": "Switch",
               "switch_style_options": {
                 "din": "DIN (vertical lever)",

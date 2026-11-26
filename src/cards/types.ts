@@ -14,6 +14,10 @@ export interface DinRailSwitchCardConfig extends LovelaceCardConfig {
   current_entity?: string;
   voltage_entity?: string;
   lcd_displays?: boolean;
+  /** Show the power, current and voltage (each on by default) */
+  show_power?: boolean;
+  show_current?: boolean;
+  show_voltage?: boolean;
   /** Device of the breaker; the editor offers only its entities */
   device?: string;
   /** Decimals on the LCD displays, 0 (the default) to 2. */
@@ -50,6 +54,10 @@ export interface DinRailPanelModuleConfig {
 
 export interface DinRailPanelCardConfig extends LovelaceCardConfig {
   title?: string;
+  /** Show the power, current and voltage of all modules and the totals */
+  show_power?: boolean;
+  show_current?: boolean;
+  show_voltage?: boolean;
   /** Color of the engraved title: a theme color (red, primary) or any CSS color */
   title_color?: string;
   /** Modules per rail, 1 to 12. */
