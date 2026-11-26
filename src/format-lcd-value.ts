@@ -194,3 +194,51 @@ export const formatLcdValue = (
   }
   return dashes;
 };
+
+/** Digits of the total displays: power, current and voltage. */
+export const TOTAL_DIGITS = { W: 5, A: 3, V: 3 } as const;
+
+export type TotalUnit = keyof typeof TOTAL_DIGITS;
+
+/**
+ * A total of the distribution board, like a panel meter with fixed units:
+ * - W: whole watts on 5 digits, never kW (798, 12345)
+ * - A: 3 digits, with as many decimals as fit (3.44, 34.4, 344)
+ * - V: 3 whole digits, zero padded (232, 000)
+ * A minus sign takes a digit. Returns dashes when the value does not fit.
+ */
+export const formatTotalValue = (value: number, unit: TotalUnit): string => {
+  const size = TOTAL_DIGITS[unit];
+  const dashes = "-".repeat(size);
+  if (!Number.isFinite(value)) {
+    return dashes;
+  }
+  if (unit === "V") {
+    const volts = Math.round(value);
+    return volts < 0 || volts >= 10 ** size
+      ? dashes
+      : String(volts).padStart(size, "0");
+  }
+  const negative = value < 0;
+  const maxDigits = size - (negative ? 1 : 0);
+  const abs = Math.abs(value);
+  let text: string | undefined;
+  if (unit === "W") {
+    const watts = Math.round(abs);
+    text = watts < 10 ** maxDigits ? String(watts) : undefined;
+  } else {
+    // Rounding can carry into a new integer digit (9.996 to 10.0), so try
+    // fewer decimals until the text fits
+    for (let decimals = maxDigits - 1; decimals >= 0; decimals--) {
+      const candidate = abs.toFixed(decimals);
+      if (countDigits(candidate) <= maxDigits) {
+        text = candidate;
+        break;
+      }
+    }
+  }
+  if (text === undefined) {
+    return dashes;
+  }
+  return Number(text) === 0 ? text : `${negative ? "-" : ""}${text}`;
+};

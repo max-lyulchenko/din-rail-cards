@@ -50,6 +50,8 @@ export interface DinRailPanelModuleConfig {
 
 export interface DinRailPanelCardConfig extends LovelaceCardConfig {
   title?: string;
+  /** Color of the engraved title: a theme color (red, primary) or any CSS color */
+  title_color?: string;
   /** Modules per rail, 1 to 12. */
   columns?: number;
   /** Decimals on the LCD displays, 0 (the default) to 2. */

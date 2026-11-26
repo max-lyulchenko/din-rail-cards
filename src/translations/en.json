@@ -4,6 +4,7 @@
       "lovelace": {
         "cards": {
           "din-rail-panel": {
+            "totals": "Totals",
             "total_power": "Total power",
             "total_current": "Total current",
             "average_voltage": "Avg voltage",
@@ -20,6 +21,7 @@
             "din-rail-panel": {
               "name": "DIN rail panel",
               "description": "This card shows switches as the breakers of a distribution board, with their power, current, and voltage.",
+              "title_color": "Title color (engraved in the cover)",
               "columns": "Modules per rail",
               "modules": "Modules",
               "modules_helper": "A panel holds up to {rails} rails of {columns} modules.",

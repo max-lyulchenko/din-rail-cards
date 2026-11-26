@@ -48,11 +48,12 @@ max_current: 40 # optional: the current turns red above it (the rating by defaul
 
 ```yaml
 type: custom:din-rail-panel-card
-title: Distribution board
+title: Distribution board # engraved in the cover
+title_color: red # optional: a theme color (red, primary) or a CSS color (#c62828)
 columns: 12 # modules per rail, 1-12
 switch_style: din # the same for all modules
-precision: 0
-show_totals: true # total power and current, average voltage (a sensor shared by modules counts once)
+precision: 0 # decimals of the modules; the totals have fixed formats
+show_totals: true # W (5 digits), A (3 digits), V (3 digits); a sensor shared by modules counts once
 # Optional: show these sensors (a main meter, say) instead of the totals of the modules
 total_power_entity: sensor.main_power
 total_current_entity: sensor.main_current

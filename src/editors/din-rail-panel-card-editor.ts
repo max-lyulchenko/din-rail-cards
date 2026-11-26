@@ -57,6 +57,7 @@ const cardConfigStruct = assign(
   baseLovelaceCardConfig,
   object({
     title: optional(string()),
+    title_color: optional(string()),
     columns: optional(number()),
     switch_style: optional(switchStyleStruct),
     precision: optional(number()),
@@ -144,6 +145,7 @@ export class DinRailPanelCardEditor
     (localize: LocalizeFunc) =>
       [
         { name: "title", selector: { text: {} } },
+        { name: "title_color", selector: { ui_color: {} } },
         {
           name: "columns",
           selector: {
@@ -395,6 +397,7 @@ export class DinRailPanelCardEditor
           `ui.panel.lovelace.editor.card.din-rail-switch.${schema.name}`
         );
       case "columns":
+      case "title_color":
       case "show_totals":
       case "total_power_entity":
       case "total_current_entity":

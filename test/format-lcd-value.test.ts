@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   currentAboveMax,
   formatLcdValue,
+  formatTotalValue,
   toBaseUnit,
   voltageLevel,
 } from "../src/format-lcd-value";
@@ -139,5 +140,33 @@ describe("formatLcdValue", () => {
 
   it("shows dashes for values that are not numbers", () => {
     expect(lcd(NaN, "W")).toEqual({ digits: "----", unit: "W" });
+  });
+});
+
+describe("formatTotalValue", () => {
+  it("shows whole watts on 5 digits, never kW", () => {
+    expect(formatTotalValue(798.4, "W")).toBe("798");
+    expect(formatTotalValue(12345.4, "W")).toBe("12345");
+    expect(formatTotalValue(0, "W")).toBe("0");
+    expect(formatTotalValue(-1500, "W")).toBe("-1500");
+    expect(formatTotalValue(99999.6, "W")).toBe("-----");
+  });
+
+  it("shows amperes on 3 digits with the decimals that fit", () => {
+    expect(formatTotalValue(3.444, "A")).toBe("3.44");
+    expect(formatTotalValue(34.44, "A")).toBe("34.4");
+    expect(formatTotalValue(344.4, "A")).toBe("344");
+    expect(formatTotalValue(9.996, "A")).toBe("10.0");
+    expect(formatTotalValue(0, "A")).toBe("0.00");
+    expect(formatTotalValue(-3.44, "A")).toBe("-3.4");
+    expect(formatTotalValue(1000, "A")).toBe("---");
+  });
+
+  it("shows volts on 3 zero padded digits", () => {
+    expect(formatTotalValue(231.6, "V")).toBe("232");
+    expect(formatTotalValue(0, "V")).toBe("000");
+    expect(formatTotalValue(5, "V")).toBe("005");
+    expect(formatTotalValue(1000, "V")).toBe("---");
+    expect(formatTotalValue(NaN, "V")).toBe("---");
   });
 });

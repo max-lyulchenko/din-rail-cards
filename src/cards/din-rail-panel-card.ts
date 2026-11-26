@@ -18,7 +18,9 @@ import { toggleEntity } from "../ha";
 import { findEntities } from "../ha";
 import {
   currentAboveMax,
+  TOTAL_DIGITS,
   formatLcdValue,
+  formatTotalValue,
   lcdPrecision,
   toBaseUnit,
   voltageLevel,
@@ -77,6 +79,33 @@ const TOTALS = [
 ] as const;
 
 const STUB_MODULES = 4;
+
+/**
+ * The CSS color of a `title_color`: a theme color like the color pickers of
+ * Home Assistant give (red, primary, light-blue), falling back to the name
+ * as a CSS color, or any other CSS color as it is (#c00, rgb(...)).
+ */
+const titleColor = (color: string | undefined): string | undefined => {
+  if (!color || color === "none") {
+    return undefined;
+  }
+  return /^[a-z][a-z-]*$/.test(color)
+    ? `var(--${color}-color, ${color})`
+    : color;
+};
+
+// The head of a Pozidriv screw, as on the cover of a distribution board: a cross
+// slot with the 4 thin ticks between its arms
+const SCREW_HEAD = html`
+  <svg class="screw" viewBox="-10 -10 20 20" aria-hidden="true">
+    <circle class="screw-head" r="9.5"></circle>
+    <g class="screw-slot">
+      <rect x="-1.3" y="-6" width="2.6" height="12" rx="0.6"></rect>
+      <rect x="-6" y="-1.3" width="12" height="2.6" rx="0.6"></rect>
+      <path d="M-3.6 -3.6 L3.6 3.6 M3.6 -3.6 L-3.6 3.6"></path>
+    </g>
+  </svg>
+`;
 
 @customElement("din-rail-panel-card")
 export class DinRailPanelCard extends LitElement implements LovelaceCard {
@@ -255,8 +284,23 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
     const readings = this._shownReadings(this._config.modules);
 
     return html`
-      <ha-card .header=${this._config.title}>
-        <div class="enclosure" style=${styleMap({ "--columns": columns })}>
+      <ha-card>
+        <div
+          class="enclosure"
+          style=${styleMap({
+            "--columns": String(columns),
+            "--title-color": titleColor(this._config.title_color),
+          })}
+        >
+          ${["top-left", "top-right", "bottom-left", "bottom-right"].map(
+            (corner) =>
+              html`<span class="corner ${corner}">${SCREW_HEAD}</span>`
+          )}
+          ${
+            this._config.title
+              ? html`<h2 class="title">${this._config.title}</h2>`
+              : nothing
+          }
           ${this._config.show_totals !== false ? this._renderTotals() : nothing}
           ${rails.map(
             (rail) => html`
@@ -342,12 +386,19 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
       return nothing;
     }
     return html`
-      <div class="totals lcds">
-        ${totals.map(({ total, shown }) =>
-          shown
-            ? this._renderTotal(total, shown.value, shown.entityId)
-            : nothing
-        )}
+      <div class="totals">
+        <span class="totals-title">
+          ${localizer(this.hass!)(
+            "ui.panel.lovelace.cards.din-rail-panel.totals"
+          )}
+        </span>
+        <div class="lcds">
+          ${totals.map(({ total, shown }) =>
+            shown
+              ? this._renderTotal(total, shown.value, shown.entityId)
+              : nothing
+          )}
+        </div>
       </div>
     `;
   }
@@ -357,12 +408,8 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
     value: number,
     entityId?: string
   ) {
-    const lcd = formatLcdValue(
-      value,
-      total.unit,
-      LCD_DIGITS,
-      lcdPrecision(this._config!.precision)
-    );
+    const digits = formatTotalValue(value, total.unit);
+    const size = TOTAL_DIGITS[total.unit];
     // Its own entity shows one reading, not an average
     const labelText = localizer(this.hass!)(
       `ui.panel.lovelace.cards.din-rail-panel.${
@@ -380,16 +427,16 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
         : undefined;
     const display = html`
       <span class=${classMap({ lcd: true, [level ?? ""]: !!level })}>
-        <span class="lcd-label">${labelText}</span>
         <din-rail-seven-segment
           class="lcd-digits"
-          .value=${lcd.digits}
-          .digits=${LCD_DIGITS}
+          style=${styleMap({ "--digits": size })}
+          .value=${digits}
+          .digits=${size}
         ></din-rail-seven-segment>
-        <span class="lcd-unit">${lcd.unit}</span>
+        <span class="lcd-unit">${total.unit}</span>
       </span>
     `;
-    const ariaLabel = `${labelText}: ${lcd.digits} ${lcd.unit}`;
+    const ariaLabel = `${labelText}: ${digits} ${total.unit}`;
     return entityId
       ? html`
           <button
@@ -403,7 +450,12 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
           </button>
         `
       : html`
-          <div class="lcd-bezel" role="img" aria-label=${ariaLabel}>
+          <div
+            class="lcd-bezel"
+            role="img"
+            aria-label=${ariaLabel}
+            title=${ariaLabel}
+          >
             ${display}
           </div>
         `;
@@ -636,20 +688,98 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
       outline-offset: 1px;
     }
 
+    /* The distribution board: a plastic cover held by a Pozidriv screw in each
+       corner */
     .enclosure {
       --module-max-width: 84px;
       --rail-padding: 10px;
       --module-gap: 2px;
+      --box-padding: 28px;
+      --box-color: color-mix(
+        in srgb,
+        var(--ha-card-background, var(--card-background-color, #fff)) 93%,
+        #808080
+      );
+      position: relative;
       box-sizing: border-box;
       max-width: calc(
         var(--columns) * var(--module-max-width) + (var(--columns) - 1) *
-          var(--module-gap) + 2 * var(--rail-padding) + 2 * var(--ha-space-3)
+          var(--module-gap) + 2 * var(--rail-padding) + 2 * var(--box-padding)
       );
-      margin: 0 auto;
-      padding: var(--ha-space-3);
+      width: calc(100% - 2 * var(--ha-space-4));
+      margin: var(--ha-space-1) auto var(--ha-space-4);
+      padding: var(--box-padding);
       display: flex;
       flex-direction: column;
       gap: var(--ha-space-3);
+      border-radius: 14px;
+      border: 1px solid rgba(0, 0, 0, 0.22);
+      background: var(--box-color);
+      box-shadow:
+        0 2px 5px rgba(0, 0, 0, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4),
+        inset 0 0 0 5px rgba(0, 0, 0, 0.025);
+    }
+    /* The name of the box, engraved in the cover: dark on its top edge,
+       light on its bottom edge, like a groove catching the light */
+    .title {
+      margin: calc(-0.5 * var(--box-padding) + 4px) 28px 0;
+      color: var(--title-color, var(--secondary-text-color));
+      font-size: var(--ha-font-size-xl, 20px);
+      font-weight: var(--ha-font-weight-bold, 600);
+      line-height: 1.2;
+      letter-spacing: 0.04em;
+      text-align: center;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      text-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.55),
+        0 -1px 0 rgba(0, 0, 0, 0.35);
+    }
+    .corner {
+      position: absolute;
+      width: 17px;
+      height: 17px;
+      --corner-offset: 6px;
+    }
+    .corner.top-left {
+      top: var(--corner-offset);
+      left: var(--corner-offset);
+    }
+    .corner.top-right {
+      top: var(--corner-offset);
+      right: var(--corner-offset);
+      transform: rotate(20deg);
+    }
+    .corner.bottom-left {
+      bottom: var(--corner-offset);
+      left: var(--corner-offset);
+      transform: rotate(-35deg);
+    }
+    .corner.bottom-right {
+      bottom: var(--corner-offset);
+      right: var(--corner-offset);
+      transform: rotate(10deg);
+    }
+    .screw {
+      display: block;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.35));
+    }
+    .screw-head {
+      fill: #c9c9c9;
+      stroke: #8f8f8f;
+      stroke-width: 0.8;
+    }
+    .screw-slot rect {
+      fill: #4a4a4a;
+    }
+    .screw-slot path {
+      stroke: #6a6a6a;
+      stroke-width: 0.7;
     }
     /* A rail: modules clipped on a metal DIN rail */
     .rail {
@@ -724,29 +854,68 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
       flex-direction: column;
       gap: calc(2 * var(--u));
     }
-    /* The meter of the whole board: the same displays, at a fixed size */
+    /* The meter of the whole box: a section engraved in the enclosure,
+       its title cut into the border, with 3 displays and no labels */
     .totals {
-      --u: 1.6px;
+      --digit-height: 22px;
+      position: relative;
+      box-sizing: border-box;
+      margin-top: 6px;
+      padding: 14px var(--ha-space-3) var(--ha-space-2);
+      border-radius: 6px;
+      border: 1px solid rgba(0, 0, 0, 0.28);
+      box-shadow:
+        1px 1px 0 rgba(255, 255, 255, 0.35),
+        inset 1px 1px 0 rgba(255, 255, 255, 0.35);
+    }
+    .totals-title {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 0 6px;
+      background: var(--box-color);
+      color: var(--secondary-text-color);
+      font-size: 11px;
+      font-weight: bold;
+      line-height: 1;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      text-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.35),
+        0 -1px 0 rgba(0, 0, 0, 0.25);
+    }
+    .totals .lcds {
       flex-direction: row;
       flex-wrap: wrap;
       justify-content: center;
       gap: var(--ha-space-2);
     }
     .totals .lcd-bezel {
-      flex: 0 1 210px;
-      min-width: 0;
+      padding: 3px;
+      border-radius: 5px;
     }
-    .lcd-label {
-      flex: 1;
-      min-width: 0;
-      font-size: calc(7 * var(--u));
-      font-weight: bold;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      text-align: start;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+    .totals .lcd {
+      gap: 5px;
+      padding: 5px 7px;
+      border-radius: 3px;
+    }
+    /* A digit is 27 of 36 units wide, plus 2 units of margin */
+    .totals .lcd-digits {
+      height: var(--digit-height);
+      width: calc(var(--digit-height) * (var(--digits) * 27 + 2) / 36);
+    }
+    /* The unit is as high as the digits: its capital fills the line, whose
+       height is the cap height of the font (0.711 em in Roboto) */
+    .totals .lcd-unit {
+      width: auto;
+      height: var(--digit-height);
+      font-family: var(--ha-font-family-body, Roboto, sans-serif);
+      font-size: calc(var(--digit-height) / 0.711);
+      font-weight: var(--ha-font-weight-medium, 500);
+      line-height: var(--digit-height);
+      overflow: visible;
     }
     .lcd-bezel {
       display: flex;
