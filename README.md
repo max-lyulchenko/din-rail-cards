@@ -9,6 +9,14 @@ Two Lovelace cards that show switches as DIN rail equipment:
 
 Both cards have a visual editor.
 
+A distribution board with stand-by buttons (`switch_style: button`):
+
+![Distribution board with stand-by buttons](https://raw.githubusercontent.com/max-lyulchenko/din-rail-cards/main/docs/board-buttons.png)
+
+The same board with DIN rail levers (`switch_style: din`):
+
+![Distribution board with DIN rail levers](https://raw.githubusercontent.com/max-lyulchenko/din-rail-cards/main/docs/board-levers.png)
+
 ## Project agenda
 
 I needed a distribution board panel like the one I tried to write myself
