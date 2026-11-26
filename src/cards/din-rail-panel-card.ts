@@ -95,15 +95,18 @@ const titleColor = (color: string | undefined): string | undefined => {
     : color;
 };
 
-// The head of a Pozidriv screw, as on the cover of a distribution board: a cross
-// slot with the 4 thin ticks between its arms
+// The head of a Pozidriv screw, as on the cover of a distribution board: a
+// cross with straight, square ended arms, and the 4 thin ticks of Pozidriv
+// between them, starting outside the cross (Phillips has none)
 const SCREW_HEAD = html`
   <svg class="screw" viewBox="-10 -10 20 20" aria-hidden="true">
     <circle class="screw-head" r="9.5"></circle>
     <g class="screw-slot">
-      <rect x="-1.3" y="-6" width="2.6" height="12" rx="0.6"></rect>
-      <rect x="-6" y="-1.3" width="12" height="2.6" rx="0.6"></rect>
-      <path d="M-3.6 -3.6 L3.6 3.6 M3.6 -3.6 L-3.6 3.6"></path>
+      <rect x="-1.4" y="-5.4" width="2.8" height="10.8" rx="0.2"></rect>
+      <rect x="-5.4" y="-1.4" width="10.8" height="2.8" rx="0.2"></rect>
+      <path
+        d="M2.5 2.5 L5.8 5.8 M-2.5 2.5 L-5.8 5.8 M2.5 -2.5 L5.8 -5.8 M-2.5 -2.5 L-5.8 -5.8"
+      ></path>
     </g>
   </svg>
 `;
@@ -699,7 +702,8 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
       --module-max-width: 63px;
       --rail-padding: 10px;
       --module-gap: 2px;
-      --box-padding: 28px;
+      /* Room for the screws: 18px in from the edges, 21px wide */
+      --box-padding: 46px;
       --box-color: color-mix(
         in srgb,
         var(--ha-card-background, var(--card-background-color, #fff)) 93%,
@@ -744,9 +748,11 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
     }
     .corner {
       position: absolute;
-      width: 17px;
-      height: 17px;
-      --corner-offset: 6px;
+      /* A PZ2 head, 5mm (at the scale of an 18mm module) in from the
+         corner along each edge */
+      width: 21px;
+      height: 21px;
+      --corner-offset: 18px;
     }
     .corner.top-left {
       top: var(--corner-offset);
@@ -783,8 +789,9 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
       fill: #4a4a4a;
     }
     .screw-slot path {
-      stroke: #6a6a6a;
-      stroke-width: 0.7;
+      stroke: #555;
+      stroke-width: 0.8;
+      stroke-linecap: round;
     }
     /* A rail: modules clipped on a metal DIN rail */
     .rail {
