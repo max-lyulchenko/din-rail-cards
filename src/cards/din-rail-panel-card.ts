@@ -386,11 +386,12 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
   }
 
   private _renderTotals() {
-    // A reading turned off for the board is not totaled either
+    // A reading turned off for the board is not totaled either, unless
+    // show_all_totals keeps all three totals
     const shown = shownReadings(this._config!).map(({ key }) => key);
-    const totals = TOTALS.filter(({ key }) => shown.includes(key)).map(
-      (total) => ({ total, shown: this._total(total) })
-    );
+    const totals = TOTALS.filter(
+      ({ key }) => this._config!.show_all_totals || shown.includes(key)
+    ).map((total) => ({ total, shown: this._total(total) }));
     if (totals.every(({ shown }) => !shown)) {
       return nothing;
     }
@@ -417,7 +418,11 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
     value: number,
     entityId?: string
   ) {
-    const digits = formatTotalValue(value, total.unit);
+    const { digits, unit } = formatTotalValue(
+      value,
+      total.unit,
+      lcdPrecision(this._config!.precision)
+    );
     const size = TOTAL_DIGITS[total.unit];
     // Its own entity shows one reading, not an average
     const labelText = localizer(this.hass!)(
@@ -442,10 +447,17 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
           .value=${digits}
           .digits=${size}
         ></din-rail-seven-segment>
-        <span class="lcd-unit">${total.unit}</span>
+        <span class="lcd-unit">
+          <span>${unit}</span>
+          ${
+            total.unit === "W"
+              ? html`<span class="unit-sizer" aria-hidden="true">kW</span>`
+              : nothing
+          }
+        </span>
       </span>
     `;
-    const ariaLabel = `${labelText}: ${digits} ${total.unit}`;
+    const ariaLabel = `${labelText}: ${digits} ${unit}`;
     return entityId
       ? html`
           <button
@@ -928,6 +940,15 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
       font-weight: var(--ha-font-weight-medium, 500);
       line-height: var(--digit-height);
       overflow: visible;
+      /* The unit and its sizer share a cell, so W takes the room of kW and
+         the display does not change width when it switches */
+      display: grid;
+    }
+    .totals .lcd-unit > span {
+      grid-area: 1 / 1;
+    }
+    .totals .unit-sizer {
+      visibility: hidden;
     }
     .lcd-bezel {
       display: flex;

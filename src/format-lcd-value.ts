@@ -196,49 +196,56 @@ export const formatLcdValue = (
 };
 
 /** Digits of the total displays: power, current and voltage. */
-export const TOTAL_DIGITS = { W: 5, A: 3, V: 3 } as const;
+export const TOTAL_DIGITS = { W: 4, A: 3, V: 3 } as const;
 
 export type TotalUnit = keyof typeof TOTAL_DIGITS;
 
 /**
- * A total of the distribution board, like a panel meter with fixed units:
- * - W: whole watts on 5 digits, never kW (798, 12345)
- * - A: 3 digits, with as many decimals as fit (3.44, 34.4, 344)
- * - V: 3 whole digits, zero padded (232, 000)
- * A minus sign takes a digit. Returns dashes when the value does not fit.
+ * A total of the distribution board, like a panel meter. Zero is shown as
+ * "0", without decimals.
+ * - W: 4 digits with `precision` decimals (798, 798.4). Above 9999 W it
+ *   switches to kW with the decimals that fit (12.35 kW, 123.5 kW).
+ * - A: 3 digits with `precision` decimals (34, 34.4).
+ * - V: 3 whole digits, zero padded (232, 005).
+ * A value with a single integer digit always shows 2 decimals, as on the
+ * modules (3.44 A). A minus sign takes a digit. Returns dashes when the
+ * value does not fit.
  */
-export const formatTotalValue = (value: number, unit: TotalUnit): string => {
+export const formatTotalValue = (
+  value: number,
+  unit: TotalUnit,
+  precision = 0
+): LcdValue => {
   const size = TOTAL_DIGITS[unit];
-  const dashes = "-".repeat(size);
+  const dashes = { digits: "-".repeat(size), unit };
   if (!Number.isFinite(value)) {
     return dashes;
   }
   if (unit === "V") {
     const volts = Math.round(value);
+    if (volts === 0) {
+      return { digits: "0", unit };
+    }
     return volts < 0 || volts >= 10 ** size
       ? dashes
-      : String(volts).padStart(size, "0");
+      : { digits: String(volts).padStart(size, "0"), unit };
   }
   const negative = value < 0;
+  const sign = negative ? "-" : "";
   const maxDigits = size - (negative ? 1 : 0);
   const abs = Math.abs(value);
-  let text: string | undefined;
+  const text = fitDigits(abs, maxDigits, precision);
+  if (text !== undefined) {
+    return Number(text) === 0
+      ? { digits: "0", unit }
+      : { digits: `${sign}${text}`, unit };
+  }
   if (unit === "W") {
-    const watts = Math.round(abs);
-    text = watts < 10 ** maxDigits ? String(watts) : undefined;
-  } else {
-    // Rounding can carry into a new integer digit (9.996 to 10.0), so try
-    // fewer decimals until the text fits
-    for (let decimals = maxDigits - 1; decimals >= 0; decimals--) {
-      const candidate = abs.toFixed(decimals);
-      if (countDigits(candidate) <= maxDigits) {
-        text = candidate;
-        break;
-      }
+    // As many decimals as fit the digits
+    const kilo = fitDigits(abs / 1000, maxDigits, maxDigits);
+    if (kilo !== undefined) {
+      return { digits: `${sign}${kilo}`, unit: "kW" };
     }
   }
-  if (text === undefined) {
-    return dashes;
-  }
-  return Number(text) === 0 ? text : `${negative ? "-" : ""}${text}`;
+  return dashes;
 };

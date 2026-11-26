@@ -69,6 +69,7 @@ const cardConfigStruct = assign(
     show_current: optional(boolean()),
     show_voltage: optional(boolean()),
     show_totals: optional(boolean()),
+    show_all_totals: optional(boolean()),
     total_power_entity: optional(string()),
     total_current_entity: optional(string()),
     total_voltage_entity: optional(string()),
@@ -166,6 +167,7 @@ export class DinRailPanelCardEditor
         { name: "precision", selector: precisionSelector },
         ...showReadingsSchema,
         { name: "show_totals", selector: { boolean: {} } },
+        { name: "show_all_totals", selector: { boolean: {} } },
         { name: "total_power_entity", selector: sensorSelector("power") },
         { name: "total_current_entity", selector: sensorSelector("current") },
         { name: "total_voltage_entity", selector: sensorSelector("voltage") },
@@ -409,6 +411,7 @@ export class DinRailPanelCardEditor
       case "columns":
       case "title_color":
       case "show_totals":
+      case "show_all_totals":
       case "total_power_entity":
       case "total_current_entity":
       case "total_voltage_entity":

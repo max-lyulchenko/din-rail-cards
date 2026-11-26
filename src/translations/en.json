@@ -31,6 +31,7 @@
               "move_down": "Move down",
               "remove_module": "Remove module",
               "show_totals": "Show the totals (power, current, average voltage)",
+              "show_all_totals": "Show all totals, even readings hidden on the modules",
               "total_power_entity": "Total power sensor (instead of the sum of the modules)",
               "total_current_entity": "Total current sensor (instead of the sum of the modules)",
               "total_voltage_entity": "Voltage sensor (instead of the average of the modules)"

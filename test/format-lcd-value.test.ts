@@ -144,29 +144,41 @@ describe("formatLcdValue", () => {
 });
 
 describe("formatTotalValue", () => {
-  it("shows whole watts on 5 digits, never kW", () => {
-    expect(formatTotalValue(798.4, "W")).toBe("798");
-    expect(formatTotalValue(12345.4, "W")).toBe("12345");
-    expect(formatTotalValue(0, "W")).toBe("0");
-    expect(formatTotalValue(-1500, "W")).toBe("-1500");
-    expect(formatTotalValue(99999.6, "W")).toBe("-----");
+  const total = (value: number, unit: "W" | "A" | "V", precision = 0) => {
+    const { digits, unit: shown } = formatTotalValue(value, unit, precision);
+    return `${digits} ${shown}`;
+  };
+
+  it("shows watts on 4 digits, then kW with the decimals that fit", () => {
+    expect(total(798.4, "W")).toBe("798 W");
+    expect(total(798.44, "W", 1)).toBe("798.4 W");
+    expect(total(9999.4, "W")).toBe("9999 W");
+    expect(total(9999.6, "W")).toBe("10.00 kW");
+    expect(total(12345, "W")).toBe("12.35 kW");
+    expect(total(123456, "W")).toBe("123.5 kW");
+    expect(total(-999, "W")).toBe("-999 W");
+    expect(total(-1500, "W")).toBe("-1.50 kW");
+    expect(total(-12345, "W")).toBe("-12.3 kW");
+    expect(total(1e7, "W")).toBe("---- W");
   });
 
-  it("shows amperes on 3 digits with the decimals that fit", () => {
-    expect(formatTotalValue(3.444, "A")).toBe("3.44");
-    expect(formatTotalValue(34.44, "A")).toBe("34.4");
-    expect(formatTotalValue(344.4, "A")).toBe("344");
-    expect(formatTotalValue(9.996, "A")).toBe("10.0");
-    expect(formatTotalValue(0, "A")).toBe("0.00");
-    expect(formatTotalValue(-3.44, "A")).toBe("-3.4");
-    expect(formatTotalValue(1000, "A")).toBe("---");
+  it("shows amperes on 3 digits with the precision", () => {
+    expect(total(34.44, "A")).toBe("34 A");
+    expect(total(34.44, "A", 1)).toBe("34.4 A");
+    expect(total(3.444, "A")).toBe("3.44 A");
+    expect(total(344.4, "A", 2)).toBe("344 A");
+    expect(total(1000, "A")).toBe("--- A");
   });
 
-  it("shows volts on 3 zero padded digits", () => {
-    expect(formatTotalValue(231.6, "V")).toBe("232");
-    expect(formatTotalValue(0, "V")).toBe("000");
-    expect(formatTotalValue(5, "V")).toBe("005");
-    expect(formatTotalValue(1000, "V")).toBe("---");
-    expect(formatTotalValue(NaN, "V")).toBe("---");
+  it("shows volts on 3 digits, zero padded", () => {
+    expect(total(231.6, "V", 2)).toBe("232 V");
+    expect(total(5, "V")).toBe("005 V");
+    expect(total(1000, "V")).toBe("--- V");
+  });
+
+  it("shows zero as a single 0", () => {
+    expect(total(0, "W", 2)).toBe("0 W");
+    expect(total(0.001, "A", 2)).toBe("0 A");
+    expect(total(0, "V")).toBe("0 V");
   });
 });
