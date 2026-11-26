@@ -68,6 +68,7 @@ const cardConfigStruct = assign(
     show_power: optional(boolean()),
     show_current: optional(boolean()),
     show_voltage: optional(boolean()),
+    zoom_on_hover: optional(boolean()),
     show_totals: optional(boolean()),
     show_total_power: optional(boolean()),
     show_total_current: optional(boolean()),
@@ -168,6 +169,7 @@ export class DinRailPanelCardEditor
         { name: "switch_style", selector: switchStyleSelector(localize) },
         { name: "precision", selector: precisionSelector },
         ...showReadingsSchema,
+        { name: "zoom_on_hover", selector: { boolean: {} } },
         { name: "show_totals", selector: { boolean: {} } },
         { name: "show_total_power", selector: { boolean: {} } },
         { name: "show_total_current", selector: { boolean: {} } },
@@ -187,6 +189,7 @@ export class DinRailPanelCardEditor
     const data = {
       columns: DIN_RAIL_PANEL_MAX_COLUMNS,
       switch_style: "din",
+      zoom_on_hover: true,
       show_totals: true,
       show_total_power: true,
       show_total_current: true,
@@ -417,6 +420,7 @@ export class DinRailPanelCardEditor
         );
       case "columns":
       case "title_color":
+      case "zoom_on_hover":
       case "show_totals":
       case "show_total_power":
       case "show_total_current":

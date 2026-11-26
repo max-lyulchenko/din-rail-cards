@@ -68,6 +68,8 @@ export interface DinRailPanelCardConfig extends LovelaceCardConfig {
   voltage_high?: number;
   /** The meter of the board: total W and A, average V (shown by default) */
   show_totals?: boolean;
+  /** Show a larger copy of the module under the mouse (on by default) */
+  zoom_on_hover?: boolean;
   /** Each total, independent of the readings shown on the modules */
   show_total_power?: boolean;
   show_total_current?: boolean;

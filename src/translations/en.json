@@ -30,6 +30,7 @@
               "move_up": "Move up",
               "move_down": "Move down",
               "remove_module": "Remove module",
+              "zoom_on_hover": "Zoom a module under the mouse",
               "show_totals": "Show the totals (power, current, average voltage)",
               "show_total_power": "Total power (W)",
               "show_total_current": "Total current (A)",

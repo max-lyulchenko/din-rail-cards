@@ -84,6 +84,18 @@ const TOTALS = [
 
 const STUB_MODULES = 4;
 
+// The zoom shown beside a module under the mouse, like a spyglass: its scale
+// and its gap to the module and the edges of the window, in pixels
+const ZOOM_SCALE = 2.5;
+const ZOOM_GAP = 12;
+
+interface Zoom {
+  module: DinRailPanelModuleConfig;
+  left: number;
+  top: number;
+  width: number;
+}
+
 /**
  * The CSS color of a `title_color`: a theme color like the color pickers of
  * Home Assistant give (red, primary, light-blue), falling back to the name
@@ -146,6 +158,8 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
   @property({ attribute: false }) public hass?: HomeAssistant;
 
   @state() private _config?: DinRailPanelCardConfig;
+
+  @state() private _zoom?: Zoom;
 
   private get _columns(): number {
     return Math.min(
@@ -246,7 +260,7 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
     if (!this._config) {
       return false;
     }
-    if (hasConfigChanged(this, changedProps)) {
+    if (hasConfigChanged(this, changedProps) || changedProps.has("_zoom")) {
       return true;
     }
     const oldHass = changedProps.get("hass") as HomeAssistant | undefined;
@@ -272,6 +286,11 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
     super.updated(changedProps);
     if (!this._config || !this.hass) {
       return;
+    }
+    // In the top layer, so the card cannot clip it
+    const zoom = this.shadowRoot!.querySelector<HTMLElement>(".zoom");
+    if (zoom && !zoom.matches(":popover-open")) {
+      zoom.showPopover?.();
     }
     const oldHass = changedProps.get("hass") as HomeAssistant | undefined;
     const oldConfig = changedProps.get("_config") as
@@ -324,9 +343,78 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
               </div>
             `
           )}
+          ${this._zoom ? this._renderZoom(this._zoom, readings) : nothing}
         </div>
       </ha-card>
     `;
+  }
+
+  // A larger copy of the module, drawn at its size rather than scaled, so it
+  // stays sharp. It lets the mouse through to the module under it.
+  private _renderZoom(
+    zoom: Zoom,
+    readings: ReturnType<typeof this._shownReadings>
+  ) {
+    return html`
+      <div
+        class="zoom"
+        popover="manual"
+        aria-hidden="true"
+        style=${styleMap({
+          left: `${zoom.left}px`,
+          top: `${zoom.top}px`,
+          width: `${zoom.width}px`,
+        })}
+      >
+        ${this._renderModule(zoom.module, readings, true)}
+      </div>
+    `;
+  }
+
+  // Beside the module, so it does not cover what the mouse points at, and
+  // toward the middle of the board, so it stays on the screen: on the right
+  // for the left 60% of the board, on the left for the right 40%. The other
+  // side when it does not fit.
+  private _zoomIn(ev: PointerEvent, module: DinRailPanelModuleConfig) {
+    if (ev.pointerType !== "mouse" || this._config!.zoom_on_hover === false) {
+      return;
+    }
+    const cell = ev.currentTarget as HTMLElement;
+    // Only over the name and the displays, not over the switch
+    const upper = cell.querySelector(".lcds") ?? cell.querySelector(".label");
+    if (!upper || ev.clientY > upper.getBoundingClientRect().bottom) {
+      if (this._zoom) {
+        this._zoomOut();
+      }
+      return;
+    }
+    if (this._zoom?.module === module) {
+      return;
+    }
+    const rect = cell.getBoundingClientRect();
+    const board = cell.closest(".enclosure")!.getBoundingClientRect();
+    const width = rect.width * ZOOM_SCALE;
+    const height = rect.height * ZOOM_SCALE;
+    const position = (rect.left + rect.width / 2 - board.left) / board.width;
+    const leftSide = rect.left - ZOOM_GAP - width;
+    const rightSide = rect.right + ZOOM_GAP;
+    const fitsLeft = leftSide >= ZOOM_GAP;
+    const fitsRight = rightSide + width <= window.innerWidth - ZOOM_GAP;
+    const onLeft =
+      position > 0.6 ? fitsLeft || !fitsRight : !fitsRight && fitsLeft;
+    const left = onLeft ? Math.max(ZOOM_GAP, leftSide) : rightSide;
+    const top = Math.max(
+      ZOOM_GAP,
+      Math.min(
+        rect.top + (rect.height - height) / 2,
+        window.innerHeight - height - ZOOM_GAP
+      )
+    );
+    this._zoom = { module, left, top, width };
+  }
+
+  private _zoomOut() {
+    this._zoom = undefined;
   }
 
   /**
@@ -485,7 +573,8 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
 
   private _renderModule(
     module: DinRailPanelModuleConfig,
-    readings: ReturnType<typeof this._shownReadings>
+    readings: ReturnType<typeof this._shownReadings>,
+    zoomed = false
   ) {
     const stateObj = module.entity
       ? (this.hass!.states[module.entity] as HassEntity | undefined)
@@ -509,7 +598,13 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
         : nothing;
 
     return html`
-      <div class="cell">
+      <div
+        class="cell"
+        @pointermove=${
+          zoomed ? undefined : (ev: PointerEvent) => this._zoomIn(ev, module)
+        }
+        @pointerleave=${zoomed ? undefined : this._zoomOut}
+      >
         <div
           class=${classMap({ module: true, on: isOn, unavailable })}
           style=${styleMap({
@@ -832,6 +927,27 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
       position: relative;
       container-type: inline-size;
       min-width: 0;
+    }
+    .zoom {
+      position: fixed;
+      inset: auto;
+      margin: 0;
+      padding: 0;
+      border: none;
+      background: none;
+      overflow: visible;
+      pointer-events: none;
+      color: inherit;
+      animation: zoom-in 120ms ease-out;
+    }
+    .zoom .module {
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    }
+    @keyframes zoom-in {
+      from {
+        opacity: 0;
+        transform: scale(0.9);
+      }
     }
     .blank {
       height: 100%;
