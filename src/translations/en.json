@@ -30,6 +30,11 @@
               "move_up": "Move up",
               "move_down": "Move down",
               "remove_module": "Remove module",
+              "panel_theme": "Panel theme",
+              "panel_theme_options": {
+                "white": "White",
+                "black": "Black (light text on black)"
+              },
               "zoom_on_hover": "Magnification (a larger copy of the module, name or totals under the mouse)",
               "show_totals": "Show the totals (power, current, average voltage)",
               "show_total_power": "Total power (W)",

@@ -80,6 +80,8 @@ export interface DinRailPanelCardConfig extends LovelaceCardConfig {
   total_voltage_entity?: string;
   /** The switch of all modules, "din" (the default) or "button". */
   switch_style?: DinRailSwitchStyle;
+  /** The colors of the board: "white" (the default) or "black" with light text */
+  panel_theme?: "white" | "black";
   /** At most 3 rails of `columns` modules. */
   modules: DinRailPanelModuleConfig[];
   theme?: string;

@@ -71,6 +71,7 @@ title: Distribution board # engraved in the cover
 title_color: red # optional: a theme color (red, primary) or a CSS color (#c62828)
 columns: 12 # modules per rail, 1-12
 switch_style: din # the same for all modules
+panel_theme: white # white, or black (light text on black)
 show_voltage: false # hide a reading on all modules (show_power, show_current too); the totals have their own switches
 zoom_on_hover: true # magnification: a larger copy of the module (its name over the switch) or the totals under the mouse
 precision: 0 # 0-2 decimals of the modules and the totals (W, A)

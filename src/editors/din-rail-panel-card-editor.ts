@@ -8,6 +8,7 @@ import {
   assert,
   assign,
   boolean,
+  enums,
   number,
   object,
   optional,
@@ -44,6 +45,8 @@ import {
   voltageLimitsSchema,
 } from "./din-rail-switch-card-editor";
 
+const PANEL_THEMES = ["white", "black"] as const;
+
 const moduleStruct = object({
   entity: optional(string()),
   device: optional(string()),
@@ -62,6 +65,7 @@ const cardConfigStruct = assign(
     title_color: optional(string()),
     columns: optional(number()),
     switch_style: optional(switchStyleStruct),
+    panel_theme: optional(enums(PANEL_THEMES)),
     precision: optional(number()),
     voltage_low: optional(number()),
     voltage_high: optional(number()),
@@ -167,6 +171,20 @@ export class DinRailPanelCardEditor
           },
         },
         { name: "switch_style", selector: switchStyleSelector(localize) },
+        {
+          name: "panel_theme",
+          selector: {
+            select: {
+              mode: "dropdown" as const,
+              options: PANEL_THEMES.map((theme) => ({
+                value: theme,
+                label: localize(
+                  `ui.panel.lovelace.editor.card.din-rail-panel.panel_theme_options.${theme}`
+                ),
+              })),
+            },
+          },
+        },
         { name: "precision", selector: precisionSelector },
         ...showReadingsSchema,
         { name: "zoom_on_hover", selector: { boolean: {} } },
@@ -189,6 +207,7 @@ export class DinRailPanelCardEditor
     const data = {
       columns: DIN_RAIL_PANEL_MAX_COLUMNS,
       switch_style: "din",
+      panel_theme: "white",
       zoom_on_hover: true,
       show_totals: true,
       show_total_power: true,
@@ -420,6 +439,7 @@ export class DinRailPanelCardEditor
         );
       case "columns":
       case "title_color":
+      case "panel_theme":
       case "zoom_on_hover":
       case "show_totals":
       case "show_total_power":

@@ -327,7 +327,10 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
     return html`
       <ha-card>
         <div
-          class="enclosure"
+          class=${classMap({
+            enclosure: true,
+            black: this._config.panel_theme === "black",
+          })}
           style=${styleMap({
             "--columns": String(columns),
             "--title-color": titleColor(this._config.title_color),
@@ -983,6 +986,40 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
         inset 0 1px 0 rgba(255, 255, 255, 0.4),
         inset 0 0 0 5px rgba(0, 0, 0, 0.025);
     }
+    .enclosure {
+      --module-fill: var(--ha-color-fill-neutral-quiet-resting, #e8e8e8);
+      --rail-color: var(--secondary-background-color);
+    }
+    /* The black theme: a black box and modules with light text */
+    .enclosure.black {
+      --box-color: #1f1f1f;
+      --module-fill: #2b2b2b;
+      --rail-color: #121212;
+      --primary-text-color: #eeeeee;
+      --secondary-text-color: #b0b0b0;
+      --divider-color: rgba(255, 255, 255, 0.14);
+      color: var(--primary-text-color);
+      border-color: #000;
+      box-shadow:
+        0 2px 5px rgba(0, 0, 0, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    }
+    .enclosure.black .title,
+    .enclosure.black .totals-title {
+      text-shadow:
+        0 -1px 0 rgba(0, 0, 0, 0.9),
+        0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+    .enclosure.black .totals:not(.zoomed) {
+      border-color: rgba(0, 0, 0, 0.8);
+      box-shadow:
+        1px 1px 0 rgba(255, 255, 255, 0.1),
+        inset 1px 1px 0 rgba(255, 255, 255, 0.1);
+    }
+    .enclosure.black .slot {
+      background: #0d0d0d;
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.8);
+    }
     /* The name of the box, engraved in the cover: dark on its top edge,
        light on its bottom edge, like a groove catching the light */
     .title {
@@ -1055,7 +1092,7 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
       gap: var(--module-gap);
       padding: var(--ha-space-2) var(--rail-padding);
       border-radius: var(--ha-border-radius-md, 8px);
-      background: var(--secondary-background-color);
+      background: var(--rail-color);
       box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
     }
     .rail::before {
@@ -1108,7 +1145,7 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
       line-height: 1.6;
       border-radius: 0.3em;
       border: 1px solid var(--divider-color);
-      background: var(--ha-color-fill-neutral-quiet-resting, #e8e8e8);
+      background: var(--module-fill);
       font-weight: var(--ha-font-weight-medium);
       text-align: center;
       white-space: nowrap;
@@ -1127,14 +1164,14 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
       box-sizing: border-box;
       border-radius: 3px;
       border: 1px solid var(--divider-color);
-      background: var(--ha-color-fill-neutral-quiet-resting, #e8e8e8);
+      background: var(--module-fill);
       opacity: 0.6;
     }
 
     /* A module, drawn like a single pole DIN rail switch */
     .module {
       --u: calc(100cqi / 69);
-      --module-color: var(--ha-color-fill-neutral-quiet-resting, #e8e8e8);
+      --module-color: var(--module-fill);
       --active-color: var(--state-active-color);
       position: relative;
       height: 100%;
