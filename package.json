@@ -1,6 +1,6 @@
 {
   "name": "din-rail-cards",
-  "version": "2026.11.2",
+  "version": "2026.11.3",
   "description": "DIN rail breaker and distribution board cards for Home Assistant",
   "license": "Apache-2.0",
   "private": true,
