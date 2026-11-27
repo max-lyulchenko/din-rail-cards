@@ -159,12 +159,14 @@ of the frontend adds in `demo/src/stubs/lovelace.ts`:
 
 ### Releases
 
-Versions follow Home Assistant: `YEAR.MONTH.PATCH`, like `2026.11.0`.
-The first release of a month has patch 0, and each later release that month
-raises it (`2026.11.1`, `2026.11.2`). The month has no leading zero
-(`2027.1.0`). Releases up to 0.5.1 used `0.x.y`.
+Versions are `YEAR.MONTH.BUILD.FIX`, like `2026.11.4.1`. A release with new
+features raises the build and resets the fix (`2026.11.5.0`), a release with
+only fixes raises the fix (`2026.11.5.1`). A new month starts again at
+`YEAR.MONTH.0.0`, and the month has no leading zero (`2027.1.0.0`). Releases
+up to 2026.11.4 used `YEAR.MONTH.PATCH`, and up to 0.5.1 `0.x.y`.
 
-1. Set `version` in `package.json` and commit.
+1. Set `version` in `package.json` and `package-lock.json` (by hand:
+   `npm version` accepts only 3 parts) and commit.
 2. On GitHub, create a release with the version as its tag and its title,
    without a prefix (`2026.11.0`). The release workflow builds
    `din-rail-cards.js` and attaches it to the release, which is where HACS

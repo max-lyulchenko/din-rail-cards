@@ -988,33 +988,17 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
     }
     .enclosure {
       --module-fill: var(--ha-color-fill-neutral-quiet-resting, #e8e8e8);
-      --rail-color: var(--secondary-background-color);
     }
-    /* The black theme: a black box and modules with light text */
+    /* The black theme: black modules with light text in the usual box */
     .enclosure.black {
-      --box-color: #1f1f1f;
       --module-fill: #2b2b2b;
-      --rail-color: #121212;
+    }
+    .enclosure.black .module,
+    .enclosure.black .zoom-name {
       --primary-text-color: #eeeeee;
       --secondary-text-color: #b0b0b0;
-      --divider-color: rgba(255, 255, 255, 0.14);
+      --divider-color: #111111;
       color: var(--primary-text-color);
-      border-color: #000;
-      box-shadow:
-        0 2px 5px rgba(0, 0, 0, 0.45),
-        inset 0 1px 0 rgba(255, 255, 255, 0.12);
-    }
-    .enclosure.black .title,
-    .enclosure.black .totals-title {
-      text-shadow:
-        0 -1px 0 rgba(0, 0, 0, 0.9),
-        0 1px 0 rgba(255, 255, 255, 0.1);
-    }
-    .enclosure.black .totals:not(.zoomed) {
-      border-color: rgba(0, 0, 0, 0.8);
-      box-shadow:
-        1px 1px 0 rgba(255, 255, 255, 0.1),
-        inset 1px 1px 0 rgba(255, 255, 255, 0.1);
     }
     .enclosure.black .slot {
       background: #0d0d0d;
@@ -1092,7 +1076,7 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
       gap: var(--module-gap);
       padding: var(--ha-space-2) var(--rail-padding);
       border-radius: var(--ha-border-radius-md, 8px);
-      background: var(--rail-color);
+      background: var(--secondary-background-color);
       box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
     }
     .rail::before {
@@ -1164,7 +1148,7 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
       box-sizing: border-box;
       border-radius: 3px;
       border: 1px solid var(--divider-color);
-      background: var(--module-fill);
+      background: var(--ha-color-fill-neutral-quiet-resting, #e8e8e8);
       opacity: 0.6;
     }
 

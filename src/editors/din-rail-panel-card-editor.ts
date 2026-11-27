@@ -160,18 +160,6 @@ export class DinRailPanelCardEditor
         { name: "title", selector: { text: {} } },
         { name: "title_color", selector: { ui_color: {} } },
         {
-          name: "columns",
-          selector: {
-            number: {
-              min: 1,
-              max: DIN_RAIL_PANEL_MAX_COLUMNS,
-              step: 1,
-              mode: "slider",
-            },
-          },
-        },
-        { name: "switch_style", selector: switchStyleSelector(localize) },
-        {
           name: "panel_theme",
           selector: {
             select: {
@@ -185,6 +173,18 @@ export class DinRailPanelCardEditor
             },
           },
         },
+        {
+          name: "columns",
+          selector: {
+            number: {
+              min: 1,
+              max: DIN_RAIL_PANEL_MAX_COLUMNS,
+              step: 1,
+              mode: "slider",
+            },
+          },
+        },
+        { name: "switch_style", selector: switchStyleSelector(localize) },
         { name: "precision", selector: precisionSelector },
         ...showReadingsSchema,
         { name: "zoom_on_hover", selector: { boolean: {} } },
