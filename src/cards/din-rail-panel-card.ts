@@ -158,6 +158,7 @@ export class DinRailPanelCard extends LitElement implements LovelaceCard {
     return {
       type: "custom:din-rail-panel-card",
       columns: DIN_RAIL_PANEL_MAX_COLUMNS,
+      zoom_on_hover: true,
       modules: switches.map((entity) => ({
         entity,
         ...findDeviceReadings(hass, entity),

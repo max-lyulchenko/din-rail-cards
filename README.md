@@ -72,7 +72,7 @@ title_color: red # optional: a theme color (red, primary) or a CSS color (#c6282
 columns: 12 # modules per rail, 1-12
 switch_style: din # the same for all modules
 show_voltage: false # hide a reading on all modules (show_power, show_current too); the totals have their own switches
-zoom_on_hover: true # a larger copy of the module under the mouse, beside it
+zoom_on_hover: true # magnification: a larger copy of the module (its name over the switch) or the totals under the mouse
 precision: 0 # 0-2 decimals of the modules and the totals (W, A)
 show_totals: true # W (4 digits, kW above 9999 W), A (3 digits), V (3 digits); a sensor shared by modules counts once
 show_total_voltage: true # each total on its own: show_total_power, show_total_current, show_total_voltage
